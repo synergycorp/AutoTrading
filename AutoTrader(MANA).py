@@ -17,6 +17,12 @@ def get_start_time(ticker):
     start_time = df.index[0]
     return start_time
 
+def get_ma5(ticker):
+    """5일 이동 평균선 조회"""
+    df = pyupbit.get_ohlcv(ticker, interval="day", count=5)
+    ma5 = df['close'].rolling(5).mean().iloc[-1]
+    return ma15
+
 def get_balance(ticker):
     """잔고 조회"""
     balances = upbit.get_balances()
@@ -39,22 +45,23 @@ print("autotrade start")
 # 자동매매 시작
 while True:
     try:
-        now = datetime.datetime.now()
-        start_time = get_start_time("KRW-BTC")
-        end_time = start_time + datetime.timedelta(days=1)
+        now = datetime.datetime.now()                                   # 현재시간
+        start_time = get_start_time("KRW-MANA")                         # 투자시작시간
+        end_time = start_time + datetime.timedelta(days=1)              # 투자종료시간
 
         # 9:00 < 현재 < 8:59:50
         if start_time < now < end_time - datetime.timedelta(seconds=10):
-            target_price = get_target_price("KRW-BTC", 0.5)             # 목표가 설정
-            current_price = get_current_price("KRW-BTC")                # 현재가 확인
-            if target_price < current_price:                            # 목표가보다 현재가가 높으면
+            target_price = get_target_price("KRW-MANA", 0.5)             # 목표가 설정
+            ma5 = get_ma5("KRW-MANA")
+            current_price = get_current_price("KRW-MANA")                # 현재가 확인
+            if target_price < current_price and ma5 < current_price:                            # 목표가보다 현재가가 높으면
                 krw = get_balance("KRW")                                # 내 잔고를 조회하고
                 if krw > 5000:                                          # 잔고가 5000원 이상이면
-                    upbit.buy_market_order("KRW-BTC", krw*0.9995)       # 코인매수 인자값으로 비트코인값과, 잔고 * 수수로 0.05%
+                    upbit.buy_market_order("KRW-MANA", krw*0.9995)       # 코인매수 인자값으로 비트코인값과, 잔고 * 수수로 0.05%
         else:
-            btc = get_balance("BTC")                                    # 현재 btc잔고 체크
-            if btc > 0.00008:                                           # 0.00008btc이상이면 전량 매도
-                upbit.sell_market_order("KRW-BTC", btc*0.9995)
+            mana = get_balance("MANA")                                    # 현재 mana잔고 체크
+            if mana > 5000:                                           # 0.00008mana이상이면 전량 매도
+                upbit.sell_market_order("KRW-MANA", mana*0.9995)
         time.sleep(1)
     except Exception as e:
         print(e)
