@@ -1,3 +1,4 @@
+'''
 def add(x, y=10, z=5):
     a = x + y + z
     return a
@@ -13,3 +14,15 @@ def add_mul(x, y):
 
 a, b, c = add_mul(20, 4)
 print(a, b, c)
+'''
+print('\\    /\\')
+print(' )  ( \')')
+print('(  /  )')
+print(' \(__)|')
+
+'''
+\    /\
+ )  ( ')
+(  /  )
+ \(__)|
+'''

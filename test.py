@@ -7,5 +7,6 @@ upbit = pyupbit.Upbit(access, secret)
 
 # 잔고조회
 print(upbit.get_balance("KRW-MANA"))     # KRW-DOGE 조회
-print(upbit.get_balance("KRW-MED"))     # KRW-MED 조회
+print(upbit.get_balance("KRW-MED"))     # KRW-MED 조회 예약 매도, 매수가 걸려있으면 안된다.
+print(upbit.get_balance("MED"))     # KRW-MED 조회 예약 매도, 매수가 걸려있으면 안된다.
 print(upbit.get_balance("KRW"))         # 보유 현금 조회
