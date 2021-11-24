@@ -26,3 +26,11 @@ print(' \(__)|')
 (  /  )
  \(__)|
 '''
+numbers = list(range(0, 100, 10))
+print(numbers)
+
+import time
+while True:
+    for i in range(20):
+        print(i)
+    time.sleep(1)

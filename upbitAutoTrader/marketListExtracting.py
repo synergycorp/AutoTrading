@@ -18,8 +18,12 @@ marketName = []
 for i in range(len(marketNameStr)):
     marketName.append(marketNameStr[i]['market'])
 
+marketName_KRW = []
 for i in marketName:                    # 각 원소에서 KRW가 아니면 전부다 제외 -> 근데 왜?? 남아있지..
-    if i[:3] != 'KRW':
-        marketName.remove(i)
+    if i[:3] == 'KRW':                  # 새로운 list를 만들어서 'KRW'가 있는 문자열만 넣어주었더니 분류 완료
+        marketName_KRW.append(i)
 
-print(marketName)
+print(len(marketName_KRW))
+# for i in marketName_KRW:
+#     if 'MANA' in i:
+#         print(marketName_KRW.index(i))
