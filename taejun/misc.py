@@ -1,6 +1,5 @@
 import pyupbit
 import os.path
-import time
 import pandas as pd
 
 
