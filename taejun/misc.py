@@ -1,5 +1,6 @@
 import pyupbit
 import os.path
+import time
 import pandas as pd
 
 
@@ -22,7 +23,11 @@ def get_tickers(market="KRW"):
     return tickers
 
 
-def sort_tickers(tickers, start=1, end=10, interval="minute240"):
+def get_price(tickers):
+    return pyupbit.get_current_price(ticker=tickers)
+
+
+def set_tickers(tickers, ratio=0.5, start=1, end=10, interval="minute240"):
     data = {
         'ticker': [],
         'volume': [],
@@ -46,8 +51,17 @@ def sort_tickers(tickers, start=1, end=10, interval="minute240"):
         df.loc[len(df)] = new_data
         sorted_df = df.sort_values(by=['volume'], ascending=False).reset_index(drop=True)
 
-    return sorted_df[start - 1:end]
+    trimmed_df = sorted_df[start - 1:end].copy()
+    trimmed_df['target'] = trimmed_df['volatility'] * ratio + trimmed_df['open']
+
+    return trimmed_df
 
 
-def get_price(ticker):
-    return pyupbit.get_current_price(ticker=ticker)
+def market_monitor(tickers):
+    price = list(get_price(tickers['ticker']).values())
+    buy_call = tickers.copy()
+    buy_call['price'] = price
+    buy_call['call'] = buy_call['price'] - buy_call['target'] >= 0
+    buy_call = buy_call.drop(['volume', 'volatility', 'open', 'target', 'price'], axis=1)
+
+    return buy_call
