@@ -1,7 +1,7 @@
 import pyupbit
 import os.path
 import time
-import numpy as np
+import pandas as pd
 
 
 def get_key():
@@ -24,7 +24,13 @@ def get_tickers(market="KRW"):
 
 
 def sort_tickers(tickers, start=1, end=10, interval="minute240"):
-    tickers_vol = []
+    data = {
+        'ticker': [],
+        'volume': [],
+        'volatility': [],
+        'open': []
+    }
+    df = pd.DataFrame(data)
     for t in tickers:
         while True:
             temp = pyupbit.get_ohlcv(ticker=t, interval=interval, count=2)
@@ -34,11 +40,15 @@ def sort_tickers(tickers, start=1, end=10, interval="minute240"):
             else:
                 time.sleep(0.02)
                 break
-        volumes = [t, temp['high'].values[0] - temp['low'].values[0], temp['value'].values[0]]
-        tickers_vol.append(volumes)
+        new_data = [t,
+                    temp['value'].values[0],
+                    temp['high'].values[0] - temp['low'].values[0],
+                    temp['open'].values[1]]
+        df.loc[len(df)] = new_data
+        sorted_df = df.sort_values(by=['volume'], ascending=False).reset_index(drop=True)
 
-    tickers_vol.sort(key=lambda x: x[2], reverse=True)  # descending order
-    tickers_vol = np.array(tickers_vol)
-    np.delete(tickers_vol, 2, axis=1)
+    return sorted_df[start - 1:end]
 
-    return tickers_vol[start - 1:end]
+
+def get_price(ticker):
+    return pyupbit.get_current_price(ticker=ticker)
