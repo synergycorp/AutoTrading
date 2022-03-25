@@ -10,3 +10,4 @@ taejun/*.xlsx
 taejun/test*
 taejun/log*
 taejun/_*
+taejun/.*
