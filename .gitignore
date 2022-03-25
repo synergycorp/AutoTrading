@@ -1,0 +1,12 @@
+# created by virtualenv automatically
+_*
+test*
+log*
+*.log
+*.xlsx
+taejun/venv
+taejun/*.log
+taejun/*.xlsx
+taejun/test*
+taejun/log*
+taejun/_*
