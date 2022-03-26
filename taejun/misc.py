@@ -3,6 +3,8 @@ import os.path
 import time
 import pandas as pd
 
+EXCEPTION = ['KRW-MLK', 'KRW-ETC']
+
 
 def get_key():
     f = open(os.path.expanduser('~') + "/.upbit_key.dat", 'r')
@@ -29,12 +31,12 @@ def get_price(tickers):
 
 def set_tickers(tickers, ratio=0.5, start=1, end=10, interval="minute240"):
     data = {
-        'ticker': [],
+        'ticker': [],       # will be index
+        'target': [],
+        'price': [],
         'volume': [],
         'volatility': [],
         'open': [],
-        'target': [],
-        'price': [],
         'call': [],
         'done': []
     }
@@ -49,11 +51,11 @@ def set_tickers(tickers, ratio=0.5, start=1, end=10, interval="minute240"):
                 time.sleep(0.02)
                 break
         new_data = [t,
+                    0,
+                    0,
                     temp['value'].values[0],
                     temp['high'].values[0] - temp['low'].values[0],
                     temp['open'].values[1],
-                    0,
-                    0,
                     False,
                     False]
         df.loc[len(df)] = new_data
@@ -61,17 +63,13 @@ def set_tickers(tickers, ratio=0.5, start=1, end=10, interval="minute240"):
 
     trimmed_df = sorted_df[start - 1:end].copy()
     trimmed_df['target'] = trimmed_df['volatility'] * ratio + trimmed_df['open']
-    trimmed_df = trimmed_df.set_index('ticker', drop=False)
+    trimmed_df = trimmed_df.set_index('ticker', drop=True)
 
     return trimmed_df
 
 
 def market_monitor(tickers):
-    price = list(get_price(tickers['ticker']).values())
-    # buy_call = tickers.copy()
-    # buy_call['price'] = price
-    # buy_call['call'] = buy_call['price'] - buy_call['target'] >= 0
-    # buy_call = buy_call.drop(['volume', 'volatility', 'open', 'target', 'price'], axis=1)
+    price = list(get_price(tickers.index).values())
 
     tickers['price'] = price
     tickers['call'] = tickers['price'] - tickers['target'] >= 0
@@ -99,9 +97,12 @@ def conv_interval(interval="minute240"):
 def buy_order(upbit, tickers):
     market_monitor(tickers)
     print(tickers)
-    for t in tickers['ticker']:
-        if tickers.loc[[t], ['call']].values & (not tickers.loc[[t], ['done']].values):
-            upbit.buy_market_order(t, 1000000)
+    unit = int((get_balance(upbit) / len(tickers))/1000)*1000*2
+    print("unit : %d" % unit)
+    for t in tickers.index:
+        if t in EXCEPTION: continue
+        elif tickers.loc[[t], ['call']].values & (not tickers.loc[[t], ['done']].values):
+            upbit.buy_market_order(t, unit)
             tickers.loc[[t], ['done']] = True
             print(t, "is bought.")
             time.sleep(0.1)
@@ -109,7 +110,7 @@ def buy_order(upbit, tickers):
 
 
 def dump_order(upbit, tickers):
-    for t in tickers['ticker']:
+    for t in tickers.index:
         if tickers.loc[[t], ['done']].values:
             print(t[4:])
             amount = get_balance(upbit, t[4:])
@@ -127,11 +128,14 @@ def watchdog(upbit, ratio=0.5, base_hour=9, interval="minute240"):
     tickers_all = get_tickers()
     tickers = set_tickers(tickers_all, ratio=ratio, interval=interval)
 
-    setup_check = 0
     while True:
         tm = get_time()
         current_min = tm.tm_hour * 60 + tm.tm_min
-        _min = base_min + current_min
+        if base_min >= current_min:
+            _min = (60*24) + current_min - base_min
+        else:
+            _min = current_min - base_min
+        print("_min = %d, base_min = %d, current_min = %d, _interval = %d" % (_min, base_min, current_min, _interval))
 
         # this is because time lagging
         if _min % _interval == 0:
