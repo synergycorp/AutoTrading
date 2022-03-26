@@ -22,12 +22,11 @@ def get_tickers(market="KRW"):
     tickers = pyupbit.get_tickers(market)
     return tickers
 
-
 def get_price(tickers):
     return pyupbit.get_current_price(ticker=tickers)
 
 
-def set_tickers(tickers, ratio=0.5, start=1, end=10, interval="minute240"):
+def set_tickers(tickers, ratio=0.5, start=1, end=30, interval="minute240"):
     data = {
         'ticker': [],
         'volume': [],
@@ -79,8 +78,8 @@ def print_time(tm):
 
 
 def conv_interval(interval="minute240"):
-    min_map = dict(minute1=3, minute3=3, minute5=5, minute10=10, minute15=15,
-                   minute30=30, minute60=60, minute240=240, day=1440, week=1440)
+    min_map = dict(minute1=2, minute3=3, minute5=5, minute10=10, minute15=15,
+                   minute30=30, minute60=60, minute240=240, day=1440, week=1440, month=1440)
     return min_map[interval]
 
 
@@ -96,15 +95,20 @@ def check_tickers(tickers):
     return buy_ticker
 
 
-def buy_tickers(tickers):
+def buy_tickers(upbit, tickers):
+    print("The length of buy_call", len(tickers))
+    for t in tickers:
+        upbit.buy_market_order(t, 10000)
+        print(t, " is bought.")
+        time.sleep(0.1)
     return 0
 
 
-def dump_tickers(tickers):
+def dump_tickers(upbit, tickers):
     return 0
 
 
-def watchdog(ratio=0.5, base_hour=9, interval="minute240"):
+def watchdog(upbit, ratio=0.5, base_hour=9, interval="minute240"):
     # constraint : you can choose interval only in minute3/5/10/15/30/60/240 and day
     _interval = conv_interval(interval)
     base_min = base_hour * 60
@@ -123,20 +127,19 @@ def watchdog(ratio=0.5, base_hour=9, interval="minute240"):
             print_time(tm)
 
             tickers = set_tickers(tickers_all, ratio=ratio, interval=interval)
-            check_tickers(tickers)
+            buy_tickers(upbit, check_tickers(tickers))
             setup_check = 1
 
-        if _min % _interval == _interval - 1:
+        elif _min % _interval == _interval - 1:
             #   <-- need to check whether tickers are
-            dump_tickers(tickers)
+            dump_tickers(upbit, tickers)
             print("[Dump It Out] ", end='')
             print_time(tm)
 
         else:
             #   <-- need to check whether tickers are
-            check_tickers(tickers)
+            buy_tickers(upbit, check_tickers(tickers))
             print("[Volume Check] ", end='')
             print_time(tm)
-
 
         time.sleep(60)  # 1 minute

@@ -1,7 +1,7 @@
 import pyupbit
 import misc
 
-K_RATIO = 0.1
+K_RATIO = 0.5
 INTERVAL = "minute3"  # minute3/5/10/15/30/60/240 and day
 
 
@@ -18,7 +18,7 @@ def main(ratio=K_RATIO, interval=INTERVAL):
     # print("price : %s" % misc.get_price(tickers['ticker']))
     # print("buy_call : \n%s" % misc.market_monitor(tickers))
 
-    misc.watchdog(ratio=ratio, interval=interval)
+    misc.watchdog(upbit, ratio=ratio, interval=interval)
 
 
 if __name__ == "__main__":
