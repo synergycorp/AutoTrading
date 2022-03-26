@@ -100,11 +100,11 @@ def buy_order(upbit, tickers):
     market_monitor(tickers)
     print(tickers)
     for t in tickers['ticker']:
-        if ((tickers.loc[[t]]['call'].values) & (not tickers.loc[[t]]['done'].values)):
+        if tickers.loc[[t], ['call']].values & (not tickers.loc[[t], ['done']].values):
             # upbit.buy_market_order(t, 10000)
-            print("DONE0 : ",tickers.loc[[t]]['done'])
-            tickers.loc[[t]]['done'] = True
-            print("DONE1 : ",tickers.loc[[t]]['done'])
+            print("DONE0 : ", tickers.loc[[t], ['done']].values)
+            tickers.loc[[t], ['done']] = True
+            print("DONE1 : ", tickers.loc[[t], ['done']].values)
             print(t, "is bought.")
             time.sleep(0.1)
     return 0
@@ -112,7 +112,7 @@ def buy_order(upbit, tickers):
 
 def dump_order(upbit, tickers):
     for t in tickers['ticker']:
-        if tickers.loc[[t]]['done'].values:
+        if tickers.loc[[t], ['done']].values:
             print(t[4:])
             amount = get_balance(upbit, t[4:])
             upbit.sell_market_order(t, amount)
