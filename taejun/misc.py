@@ -22,16 +22,21 @@ def get_tickers(market="KRW"):
     tickers = pyupbit.get_tickers(market)
     return tickers
 
+
 def get_price(tickers):
     return pyupbit.get_current_price(ticker=tickers)
 
 
-def set_tickers(tickers, ratio=0.5, start=1, end=30, interval="minute240"):
+def set_tickers(tickers, ratio=0.5, start=1, end=10, interval="minute240"):
     data = {
         'ticker': [],
         'volume': [],
         'volatility': [],
-        'open': []
+        'open': [],
+        'target': [],
+        'price': [],
+        'call': [],
+        'done': []
     }
     df = pd.DataFrame(data)
     for t in tickers:
@@ -46,24 +51,32 @@ def set_tickers(tickers, ratio=0.5, start=1, end=30, interval="minute240"):
         new_data = [t,
                     temp['value'].values[0],
                     temp['high'].values[0] - temp['low'].values[0],
-                    temp['open'].values[1]]
+                    temp['open'].values[1],
+                    0,
+                    0,
+                    False,
+                    False]
         df.loc[len(df)] = new_data
         sorted_df = df.sort_values(by=['volume'], ascending=False).reset_index(drop=True)
 
     trimmed_df = sorted_df[start - 1:end].copy()
     trimmed_df['target'] = trimmed_df['volatility'] * ratio + trimmed_df['open']
+    trimmed_df = trimmed_df.set_index('ticker', drop=False)
 
     return trimmed_df
 
 
 def market_monitor(tickers):
     price = list(get_price(tickers['ticker']).values())
-    buy_call = tickers.copy()
-    buy_call['price'] = price
-    buy_call['call'] = buy_call['price'] - buy_call['target'] >= 0
-    buy_call = buy_call.drop(['volume', 'volatility', 'open', 'target', 'price'], axis=1)
+    # buy_call = tickers.copy()
+    # buy_call['price'] = price
+    # buy_call['call'] = buy_call['price'] - buy_call['target'] >= 0
+    # buy_call = buy_call.drop(['volume', 'volatility', 'open', 'target', 'price'], axis=1)
 
-    return buy_call
+    tickers['price'] = price
+    tickers['call'] = tickers['price'] - tickers['target'] >= 0
+
+    return tickers
 
 
 def get_time():
@@ -83,28 +96,26 @@ def conv_interval(interval="minute240"):
     return min_map[interval]
 
 
-def check_tickers(tickers):
-    buy_call = market_monitor(tickers)
-    buy_ticker = buy_call['ticker'].where(buy_call['call'] == True)
-    buy_ticker = buy_ticker.dropna()
-    if len(buy_ticker) == 0:
-        print("---Negative")
-    else:
-        print("---[Woof Woof] : \"I found it\"")
-        print(buy_ticker)  # Here needs to be some buy order
-    return buy_ticker
-
-
-def buy_tickers(upbit, tickers):
-    print("The length of buy_call", len(tickers))
-    for t in tickers:
-        upbit.buy_market_order(t, 10000)
-        print(t, " is bought.")
-        time.sleep(0.1)
+def buy_order(upbit, tickers):
+    market_monitor(tickers)
+    print(tickers)
+    for t in tickers['ticker']:
+        if ((tickers.loc[[t]]['call'].values) & (not tickers.loc[[t]]['done'].values)):
+            upbit.buy_market_order(t, 10000)
+            tickers.loc[[t]]['done'] = False
+            print(t, "is bought.")
+            time.sleep(0.1)
     return 0
 
 
-def dump_tickers(upbit, tickers):
+def dump_order(upbit, tickers):
+    for t in tickers['ticker']:
+        if tickers.loc[[t]]['done'].values:
+            print(t[4:])
+            amount = get_balance(upbit, t[4:])
+            upbit.sell_market_order(t, amount)
+            print(t, "is sold.")
+            time.sleep(0.1)
     return 0
 
 
@@ -117,29 +128,31 @@ def watchdog(upbit, ratio=0.5, base_hour=9, interval="minute240"):
     tickers = set_tickers(tickers_all, ratio=ratio, interval=interval)
 
     setup_check = 0
-    while True:  # When should I break it out ??
+    while True:
         tm = get_time()
         current_min = tm.tm_hour * 60 + tm.tm_min
         _min = base_min + current_min
 
         if _min % _interval == 0:
-            print("[Volume Check] ", end='')
+            print("[Update] ", end='')
             print_time(tm)
-
             tickers = set_tickers(tickers_all, ratio=ratio, interval=interval)
-            buy_tickers(upbit, check_tickers(tickers))
+
+            print("[Buy0] ", end='')
+            print_time(tm)
+            buy_order(upbit, tickers)
             setup_check = 1
 
         elif _min % _interval == _interval - 1:
             #   <-- need to check whether tickers are
-            dump_tickers(upbit, tickers)
-            print("[Dump It Out] ", end='')
+            dump_order(upbit, tickers)
+            print("[Dump] ", end='')
             print_time(tm)
 
         else:
             #   <-- need to check whether tickers are
-            buy_tickers(upbit, check_tickers(tickers))
-            print("[Volume Check] ", end='')
+            print("[Buy1] ", end='')
             print_time(tm)
+            buy_order(upbit, tickers)
 
         time.sleep(60)  # 1 minute
