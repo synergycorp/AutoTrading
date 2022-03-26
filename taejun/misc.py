@@ -102,9 +102,7 @@ def buy_order(upbit, tickers):
     for t in tickers['ticker']:
         if tickers.loc[[t], ['call']].values & (not tickers.loc[[t], ['done']].values):
             # upbit.buy_market_order(t, 10000)
-            print("DONE0 : ", tickers.loc[[t], ['done']].values)
             tickers.loc[[t], ['done']] = True
-            print("DONE1 : ", tickers.loc[[t], ['done']].values)
             print(t, "is bought.")
             time.sleep(0.1)
     return 0
@@ -135,7 +133,15 @@ def watchdog(upbit, ratio=0.5, base_hour=9, interval="minute240"):
         current_min = tm.tm_hour * 60 + tm.tm_min
         _min = base_min + current_min
 
+        # this is because time lagging
         if _min % _interval == 0:
+            state = "update"
+        elif _min % _interval == _interval - 1:
+            state = "close"
+        else:
+            state = "check"
+
+        if state == "update":
             print("[Update] ", end='')
             print_time(tm)
             tickers = set_tickers(tickers_all, ratio=ratio, interval=interval)
@@ -143,16 +149,13 @@ def watchdog(upbit, ratio=0.5, base_hour=9, interval="minute240"):
             print("[Buy0] ", end='')
             print_time(tm)
             buy_order(upbit, tickers)
-            setup_check = 1
 
-        elif _min % _interval == _interval - 1:
-            #   <-- need to check whether tickers are
+        elif state == "close":
             dump_order(upbit, tickers)
             print("[Dump] ", end='')
             print_time(tm)
 
-        else:
-            #   <-- need to check whether tickers are
+        elif state == "check":
             print("[Buy1] ", end='')
             print_time(tm)
             buy_order(upbit, tickers)
