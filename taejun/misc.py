@@ -101,7 +101,7 @@ def buy_order(upbit, tickers):
     print(tickers)
     for t in tickers['ticker']:
         if tickers.loc[[t], ['call']].values & (not tickers.loc[[t], ['done']].values):
-            # upbit.buy_market_order(t, 10000)
+            upbit.buy_market_order(t, 1000000)
             tickers.loc[[t], ['done']] = True
             print(t, "is bought.")
             time.sleep(0.1)
