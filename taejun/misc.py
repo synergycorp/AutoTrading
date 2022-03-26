@@ -65,3 +65,78 @@ def market_monitor(tickers):
     buy_call = buy_call.drop(['volume', 'volatility', 'open', 'target', 'price'], axis=1)
 
     return buy_call
+
+
+def get_time():
+    tm = time.localtime()
+    return tm
+
+
+def print_time(tm):
+    string = time.strftime('%Y-%m-%d %I:%M:%S %p', tm)
+    print(string)
+    return string
+
+
+def conv_interval(interval="minute240"):
+    min_map = dict(minute1=3, minute3=3, minute5=5, minute10=10, minute15=15,
+                   minute30=30, minute60=60, minute240=240, day=1440, week=1440)
+    return min_map[interval]
+
+
+def check_tickers(tickers):
+    buy_call = market_monitor(tickers)
+    buy_ticker = buy_call['ticker'].where(buy_call['call'] == True)
+    buy_ticker = buy_ticker.dropna()
+    if len(buy_ticker) == 0:
+        print("---Negative")
+    else:
+        print("---[Woof Woof] : \"I found it\"")
+        print(buy_ticker)  # Here needs to be some buy order
+    return buy_ticker
+
+
+def buy_tickers(tickers):
+    return 0
+
+
+def dump_tickers(tickers):
+    return 0
+
+
+def watchdog(ratio=0.5, base_hour=9, interval="minute240"):
+    # constraint : you can choose interval only in minute3/5/10/15/30/60/240 and day
+    _interval = conv_interval(interval)
+    base_min = base_hour * 60
+
+    tickers_all = get_tickers()
+    tickers = set_tickers(tickers_all, ratio=ratio, interval=interval)
+
+    setup_check = 0
+    while True:  # When should I break it out ??
+        tm = get_time()
+        current_min = tm.tm_hour * 60 + tm.tm_min
+        _min = base_min + current_min
+
+        if _min % _interval == 0:
+            print("[Volume Check] ", end='')
+            print_time(tm)
+
+            tickers = set_tickers(tickers_all, ratio=ratio, interval=interval)
+            check_tickers(tickers)
+            setup_check = 1
+
+        if _min % _interval == _interval - 1:
+            #   <-- need to check whether tickers are
+            dump_tickers(tickers)
+            print("[Dump It Out] ", end='')
+            print_time(tm)
+
+        else:
+            #   <-- need to check whether tickers are
+            check_tickers(tickers)
+            print("[Volume Check] ", end='')
+            print_time(tm)
+
+
+        time.sleep(60)  # 1 minute
