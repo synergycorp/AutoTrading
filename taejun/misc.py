@@ -31,7 +31,7 @@ def get_price(tickers):
 
 def set_tickers(tickers, ratio=0.5, start=1, end=20, interval="minute240"):
     data = {
-        'ticker': [],       # will be index
+        'ticker': [],  # will be index
         'target': [],
         'price': [],
         'volume': [],
@@ -97,10 +97,11 @@ def conv_interval(interval="minute240"):
 def buy_order(upbit, tickers):
     market_monitor(tickers)
     print(tickers)
-    unit = int((get_balance(upbit) / sum(tickers.done==False))/1000)*1000*2
+    unit = int((get_balance(upbit) / sum(tickers.done == False)) / 1000) * 1000 * 2
     print("unit : %d" % unit)
     for t in tickers.index:
-        if t in EXCEPTION: continue
+        if t in EXCEPTION:
+            continue
         elif tickers.loc[[t], ['call']].values & (not tickers.loc[[t], ['done']].values):
             upbit.buy_market_order(t, unit)
             tickers.loc[[t], ['done']] = True
@@ -132,20 +133,22 @@ def watchdog(upbit, ratio=0.5, base_hour=9, interval="minute240"):
         tm = get_time()
         current_min = tm.tm_hour * 60 + tm.tm_min
         if base_min >= current_min:
-            _min = (60*24) + current_min - base_min
+            _min = (60 * 24) + current_min - base_min
         else:
             _min = current_min - base_min
         print("_min = %d, base_min = %d, current_min = %d, _interval = %d" % (_min, base_min, current_min, _interval))
 
-        # this is because time lagging
+        state = "initial"
         if _min % _interval == 0:
             state = "update"
-        elif _min % _interval == _interval - 1:
-            state = "close"
-        else:
+        elif not state == "initial":
             state = "check"
 
         if state == "update":
+            dump_order(upbit, tickers)
+            print("[Dump] ", end='')
+            print_time(tm)
+
             print("[Update] ", end='')
             print_time(tm)
             tickers = set_tickers(tickers_all, ratio=ratio, interval=interval)
@@ -153,11 +156,6 @@ def watchdog(upbit, ratio=0.5, base_hour=9, interval="minute240"):
             print("[Buy0] ", end='')
             print_time(tm)
             buy_order(upbit, tickers)
-
-        elif state == "close":
-            dump_order(upbit, tickers)
-            print("[Dump] ", end='')
-            print_time(tm)
 
         elif state == "check":
             print("[Buy1] ", end='')
