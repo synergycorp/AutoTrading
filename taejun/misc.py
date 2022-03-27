@@ -3,7 +3,7 @@ import os.path
 import time
 import pandas as pd
 
-EXCEPTION = ['KRW-MLK', 'KRW-ETC']
+EXCEPTION = ['KRW-MLK']
 
 
 def get_key():
