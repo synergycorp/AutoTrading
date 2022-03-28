@@ -109,7 +109,6 @@ def set_tickers(tickers_all, tickers, ratio=0.5, start=1, end=10, interval="minu
 
 
 def set_buy_target(tickers):
-    set_price(tickers)
     tickers['call'] = tickers['price'] - tickers['buy_target'] >= 0
 
     return 0
@@ -133,8 +132,8 @@ def conv_interval(interval="minute240"):
 
 
 def buy_order(upbit, tickers):
-    unit = int((get_balance(upbit) / sum(tickers.done == False)) / 1000) * 1000 * 2
-    # unit = 10000
+    # unit = int((get_balance(upbit) / sum(tickers.done == False)) / 1000) * 1000 * 2
+    unit = 10000
     print("unit : %d" % unit)
     for t in tickers.index:
         if tickers.loc[[t], ['call']].values & (not tickers.loc[[t], ['done']].values):
@@ -194,6 +193,7 @@ def watchdog(upbit, ratio=0.5, base_hour=9, interval="minute240"):
 
             print("[Buy0] ", end='')
             print_time(tm)
+            set_buy_target(tickers)
             buy_order(upbit, tickers)
 
         elif state == "check":
@@ -208,6 +208,7 @@ def watchdog(upbit, ratio=0.5, base_hour=9, interval="minute240"):
 
             print("[Buy1] ", end='')
             print_time(tm)
+            set_buy_target(tickers)
             buy_order(upbit, tickers)
 
         time.sleep(60)  # 1 minute
