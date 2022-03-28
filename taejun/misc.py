@@ -19,31 +19,68 @@ def get_balance(upbit, ticker="KRW"):
 
 
 def get_tickers(market="KRW"):
-    # tickers_all = pyupbit.get_tickers(fiat='KRW')
-    # tickers_krw = [i for i in tickers_all if i[:3] == "KRW"]
     tickers = pyupbit.get_tickers(market)
     return tickers
 
 
 def get_price(tickers):
+    print("***********************")
     return pyupbit.get_current_price(ticker=tickers)
 
 
-def set_tickers(tickers, ratio=0.5, start=1, end=10, interval="minute240"):
+def get_df_format():
     data = {
         'ticker': [],  # will be index
         'buy_target': [],
-        'sell_target': [],
         'price': [],
+        'stoploss_target': [],
         'volume': [],
-        'volatility': [],
         'open': [],
         'call': [],
         'done': []
     }
-    df = pd.DataFrame(data)
-    for t in tickers:
+
+    df = pd.DataFrame(data).set_index('ticker', drop=True)
+    df['call'] = df['call'].astype(bool)
+    df['done'] = df['done'].astype(bool)
+
+    return df
+
+
+def set_price(tickers):
+    print(tickers, "test002")
+    print(tickers.index, "test003")
+    print(get_price(tickers.index), "test004")
+    tickers['price'] = list(get_price(tickers.index).values())
+    return 0
+
+
+def set_tickers(tickers_all, tickers, ratio=0.5, start=1, end=10, interval="minute240"):
+    df = get_df_format()
+
+    for t in tickers.index:       # holdings processing
         if t in EXCEPTION:
+            continue
+        if not tickers.loc[[t], ['done']].values:
+            continue
+        while True:
+            temp = pyupbit.get_ohlcv(ticker=t, interval=interval, count=2)
+            if temp is None:
+                time.sleep(0.1)
+                continue
+            else:
+                time.sleep(0.02)
+                break
+        t['stoploss_target'] = temp['open'].values[1] * 0.99
+        t['open'] = temp['open'].values[1]
+        df = pd.concat([df, t])
+
+    numof_holdings = len(df)
+
+    for t in tickers_all:
+        if t in EXCEPTION:
+            continue
+        if t in df:     # pass holdings
             continue
         while True:
             temp = pyupbit.get_ohlcv(ticker=t, interval=interval, count=2)
@@ -55,34 +92,31 @@ def set_tickers(tickers, ratio=0.5, start=1, end=10, interval="minute240"):
                 break
         new_data = {
             'ticker': [t],  # will be index
-            'buy_target': [999999999],
-            'sell_target': [999999999],
+            'buy_target': [(temp['high'].values[0] - temp['low'].values[0]) * ratio + temp['open'].values[1]],
             'price': [0],
+            'stoploss_target': [0],
             'volume': [temp['value'].values[0]],
-            'volatility': [temp['high'].values[0] - temp['low'].values[0]],
             'open': [temp['open'].values[1]],
             'call': [False],
             'done': [False]
         }
-        new_df = pd.DataFrame(new_data)
+        new_df = pd.DataFrame(new_data).set_index('ticker', drop=True)
+        # print(df, "test999")
         df = pd.concat([df, new_df])
-        # df.loc[len(df)] = new_data
-        sorted_df = df.sort_values(by=['volume'], ascending=False).reset_index(drop=True)
 
-    trimmed_df = sorted_df[start - 1:end].copy()
-    trimmed_df['buy_target'] = trimmed_df['volatility'] * ratio + trimmed_df['open']
-    trimmed_df = trimmed_df.set_index('ticker', drop=True)
+    sorted_df = df.sort_values(by=['volume'], ascending=False)
+
+    trimmed_df = sorted_df[start - 1:end - numof_holdings].copy()
+    set_price(trimmed_df)
 
     return trimmed_df
 
 
-def market_monitor(tickers):
-    price = list(get_price(tickers.index).values())
-
-    tickers['price'] = price
+def set_buy_target(tickers):
+    set_price(tickers)
     tickers['call'] = tickers['price'] - tickers['buy_target'] >= 0
 
-    return tickers
+    return 0
 
 
 def get_time():
@@ -103,26 +137,23 @@ def conv_interval(interval="minute240"):
 
 
 def buy_order(upbit, tickers):
-    market_monitor(tickers)
-    print(tickers)
     unit = int((get_balance(upbit) / sum(tickers.done == False)) / 1000) * 1000 * 2
     print("unit : %d" % unit)
     for t in tickers.index:
         if tickers.loc[[t], ['call']].values & (not tickers.loc[[t], ['done']].values):
             upbit.buy_market_order(t, unit)
             tickers.loc[[t], ['done']] = True
-            print(t, "is bought.")
+            print(t, "is bought for %.1f" % tickers.loc[[t], ['price']].values)
             time.sleep(0.1)
     return 0
 
 
-def dump_order(upbit, tickers):
-    for t in tickers.index:
-        if tickers.loc[[t], ['done']].values:
-            print(t[4:])
-            amount = get_balance(upbit, t[4:])
+def sell_order(upbit, tickers):
+    for t in [t for t in tickers.index if tickers.loc[[t], ['done']].values]:
+        if tickers.loc[[t], ['price']].values < tickers.loc[[t], ['stoploss_target']].values:
+            amount = get_balance(upbit, t[4:])  # drop KRW-
             upbit.sell_market_order(t, amount)
-            print(t, "is sold.")
+            print(t, "is sold for %.1f" % tickers.loc[[t], ['price']].values)
             time.sleep(0.1)
     return 0
 
@@ -133,7 +164,10 @@ def watchdog(upbit, ratio=0.5, base_hour=9, interval="minute240"):
     base_min = base_hour * 60
 
     tickers_all = get_tickers()
-    tickers = set_tickers(tickers_all, ratio=ratio, interval=interval)
+    tickers = get_df_format()
+    tickers = set_tickers(tickers_all, tickers, ratio=ratio, interval=interval)
+
+    state = "initial"
 
     while True:
         tm = get_time()
@@ -142,30 +176,39 @@ def watchdog(upbit, ratio=0.5, base_hour=9, interval="minute240"):
             _min = (60 * 24) + current_min - base_min
         else:
             _min = current_min - base_min
-        print("_min = %d, base_min = %d, current_min = %d, _interval = %d" % (_min, base_min, current_min, _interval))
 
-        state = "initial"
         if _min % _interval == 0:
             state = "update"
         elif not state == "initial":
             state = "check"
 
-        print("STATUS : ", state)
-        print_time(tm)
+        print("STATUS : ", state, end='')
+        print(" / _min = %d, base_min = %d, current_min = %d, _interval = %d, ratio = %d" % (_min, base_min, current_min, _interval, ratio))
 
         if state == "update":
-            dump_order(upbit, tickers)
-            print("[Dump] ", end='')
-
             print("[Update] ", end='')
             print_time(tm)
-            tickers = set_tickers(tickers_all, ratio=ratio, interval=interval)
+            tickers = set_tickers(tickers_all, tickers, ratio=ratio, interval=interval)
+
+            print("[Sell0] ", end='')
+            print_time(tm)
+            sell_order(upbit, tickers)
 
             print("[Buy0] ", end='')
             print_time(tm)
             buy_order(upbit, tickers)
 
         elif state == "check":
+            print("[Get Price] ", end='')
+            print_time(tm)
+            print(tickers, "test777")
+            print("===================")
+            set_price(tickers)
+
+            print("[Sell1] ", end='')
+            print_time(tm)
+            sell_order(upbit, tickers)
+
             print("[Buy1] ", end='')
             print_time(tm)
             buy_order(upbit, tickers)
