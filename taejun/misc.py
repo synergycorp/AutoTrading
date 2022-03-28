@@ -32,7 +32,8 @@ def get_price(tickers):
 def set_tickers(tickers, ratio=0.5, start=1, end=10, interval="minute240"):
     data = {
         'ticker': [],  # will be index
-        'target': [],
+        'buy_target': [],
+        'sell_target': [],
         'price': [],
         'volume': [],
         'volatility': [],
@@ -42,6 +43,8 @@ def set_tickers(tickers, ratio=0.5, start=1, end=10, interval="minute240"):
     }
     df = pd.DataFrame(data)
     for t in tickers:
+        if t in EXCEPTION:
+            continue
         while True:
             temp = pyupbit.get_ohlcv(ticker=t, interval=interval, count=2)
             if temp is None:
@@ -50,19 +53,24 @@ def set_tickers(tickers, ratio=0.5, start=1, end=10, interval="minute240"):
             else:
                 time.sleep(0.02)
                 break
-        new_data = [t,
-                    0,
-                    0,
-                    temp['value'].values[0],
-                    temp['high'].values[0] - temp['low'].values[0],
-                    temp['open'].values[1],
-                    False,
-                    False]
-        df.loc[len(df)] = new_data
+        new_data = {
+            'ticker': [t],  # will be index
+            'buy_target': [999999999],
+            'sell_target': [999999999],
+            'price': [0],
+            'volume': [temp['value'].values[0]],
+            'volatility': [temp['high'].values[0] - temp['low'].values[0]],
+            'open': [temp['open'].values[1]],
+            'call': [False],
+            'done': [False]
+        }
+        new_df = pd.DataFrame(new_data)
+        df = pd.concat([df, new_df])
+        # df.loc[len(df)] = new_data
         sorted_df = df.sort_values(by=['volume'], ascending=False).reset_index(drop=True)
 
     trimmed_df = sorted_df[start - 1:end].copy()
-    trimmed_df['target'] = trimmed_df['volatility'] * ratio + trimmed_df['open']
+    trimmed_df['buy_target'] = trimmed_df['volatility'] * ratio + trimmed_df['open']
     trimmed_df = trimmed_df.set_index('ticker', drop=True)
 
     return trimmed_df
@@ -72,7 +80,7 @@ def market_monitor(tickers):
     price = list(get_price(tickers.index).values())
 
     tickers['price'] = price
-    tickers['call'] = tickers['price'] - tickers['target'] >= 0
+    tickers['call'] = tickers['price'] - tickers['buy_target'] >= 0
 
     return tickers
 
@@ -100,9 +108,7 @@ def buy_order(upbit, tickers):
     unit = int((get_balance(upbit) / sum(tickers.done == False)) / 1000) * 1000 * 2
     print("unit : %d" % unit)
     for t in tickers.index:
-        if t in EXCEPTION:
-            continue
-        elif tickers.loc[[t], ['call']].values & (not tickers.loc[[t], ['done']].values):
+        if tickers.loc[[t], ['call']].values & (not tickers.loc[[t], ['done']].values):
             upbit.buy_market_order(t, unit)
             tickers.loc[[t], ['done']] = True
             print(t, "is bought.")
@@ -144,10 +150,12 @@ def watchdog(upbit, ratio=0.5, base_hour=9, interval="minute240"):
         elif not state == "initial":
             state = "check"
 
+        print("STATUS : ", state)
+        print_time(tm)
+
         if state == "update":
             dump_order(upbit, tickers)
             print("[Dump] ", end='')
-            print_time(tm)
 
             print("[Update] ", end='')
             print_time(tm)
