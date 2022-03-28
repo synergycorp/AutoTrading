@@ -52,7 +52,7 @@ def set_price(tickers):
 
 
 def set_tickers(tickers_all, tickers, ratio=0.5, start=1, end=10, interval="minute240"):
-    df = get_df_format()
+    df0 = get_df_format()
 
     for t in tickers.index:       # holdings processing
         if t in EXCEPTION:
@@ -67,16 +67,18 @@ def set_tickers(tickers_all, tickers, ratio=0.5, start=1, end=10, interval="minu
             else:
                 time.sleep(0.02)
                 break
-        t['stoploss_target'] = temp['open'].values[1] * 0.99
-        t['open'] = temp['open'].values[1]
-        df = pd.concat([df, t])
+        tickers.loc[[t], ['stoploss_target']] = temp['open'].values[1] * 0.97
+        tickers.loc[[t], ['open']] = temp['open'].values[1]
+        df0 = pd.concat([df0, tickers.loc[[t]]])
 
-    numof_holdings = len(df)
+    numof_holdings = len(df0)
+
+    df1 = get_df_format()
 
     for t in tickers_all:
         if t in EXCEPTION:
             continue
-        if t in df:     # pass holdings
+        if t in df0.index:     # pass holdings
             continue
         while True:
             temp = pyupbit.get_ohlcv(ticker=t, interval=interval, count=2)
@@ -97,15 +99,15 @@ def set_tickers(tickers_all, tickers, ratio=0.5, start=1, end=10, interval="minu
             'done': [False]
         }
         new_df = pd.DataFrame(new_data).set_index('ticker', drop=True)
-        # print(df, "test999")
-        df = pd.concat([df, new_df])
+        df1 = pd.concat([df1, new_df])
 
-    sorted_df = df.sort_values(by=['volume'], ascending=False)
+    sorted_df = df1.sort_values(by=['volume'], ascending=False)
 
     trimmed_df = sorted_df[start - 1:end - numof_holdings].copy()
-    set_price(trimmed_df)
+    merged_df = pd.concat([df0, trimmed_df])
+    set_price(merged_df)
 
-    return trimmed_df
+    return merged_df
 
 
 def set_buy_target(tickers):
