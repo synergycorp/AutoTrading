@@ -29,7 +29,7 @@ def get_price(tickers):
     return pyupbit.get_current_price(ticker=tickers)
 
 
-def set_tickers(tickers, ratio=0.5, start=1, end=15, interval="minute240"):
+def set_tickers(tickers, ratio=0.5, start=1, end=10, interval="minute240"):
     data = {
         'ticker': [],  # will be index
         'target': [],
@@ -97,7 +97,7 @@ def conv_interval(interval="minute240"):
 def buy_order(upbit, tickers):
     market_monitor(tickers)
     print(tickers)
-    unit = int((get_balance(upbit) / sum(tickers.done == False)) / 1000) * 1000 * 3
+    unit = int((get_balance(upbit) / sum(tickers.done == False)) / 1000) * 1000 * 2
     print("unit : %d" % unit)
     for t in tickers.index:
         if t in EXCEPTION:
