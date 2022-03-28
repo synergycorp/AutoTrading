@@ -134,8 +134,8 @@ def conv_interval(interval="minute240"):
 
 
 def buy_order(upbit, tickers):
-    # unit = int((get_balance(upbit) / sum(tickers.done == False)) / 1000) * 1000 * 2
-    unit = 10000
+    unit = int((get_balance(upbit) / sum(tickers.done == False)) / 1000) * 1000 * 2
+    # unit = 10000
     print("unit : %d" % unit)
     for t in tickers.index:
         if tickers.loc[[t], ['call']].values & (not tickers.loc[[t], ['done']].values):
