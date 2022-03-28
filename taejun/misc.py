@@ -24,7 +24,6 @@ def get_tickers(market="KRW"):
 
 
 def get_price(tickers):
-    print("***********************")
     return pyupbit.get_current_price(ticker=tickers)
 
 
@@ -48,9 +47,6 @@ def get_df_format():
 
 
 def set_price(tickers):
-    print(tickers, "test002")
-    print(tickers.index, "test003")
-    print(get_price(tickers.index), "test004")
     tickers['price'] = list(get_price(tickers.index).values())
     return 0
 
@@ -137,7 +133,8 @@ def conv_interval(interval="minute240"):
 
 
 def buy_order(upbit, tickers):
-    unit = int((get_balance(upbit) / sum(tickers.done == False)) / 1000) * 1000 * 2
+    # unit = int((get_balance(upbit) / sum(tickers.done == False)) / 1000) * 1000 * 2
+    unit = 10000
     print("unit : %d" % unit)
     for t in tickers.index:
         if tickers.loc[[t], ['call']].values & (not tickers.loc[[t], ['done']].values):
@@ -189,6 +186,7 @@ def watchdog(upbit, ratio=0.5, base_hour=9, interval="minute240"):
             print("[Update] ", end='')
             print_time(tm)
             tickers = set_tickers(tickers_all, tickers, ratio=ratio, interval=interval)
+            print(tickers)
 
             print("[Sell0] ", end='')
             print_time(tm)
@@ -201,9 +199,8 @@ def watchdog(upbit, ratio=0.5, base_hour=9, interval="minute240"):
         elif state == "check":
             print("[Get Price] ", end='')
             print_time(tm)
-            print(tickers, "test777")
-            print("===================")
             set_price(tickers)
+            print(tickers)
 
             print("[Sell1] ", end='')
             print_time(tm)

@@ -1,7 +1,7 @@
 import pyupbit
 import misc
 
-K_RATIO = 0.5
+K_RATIO = 0.1
 INTERVAL = "minute3"  # minute3/5/10/15/30/60/240 and day
 
 
