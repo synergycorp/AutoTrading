@@ -15,5 +15,6 @@ def set_bot(token):
     return bot
 
 
-def send_msg(bot, dt):
-    bot.senMessage(dt, )
+def send_msg(bot, dt, msg):
+    for m in msg:
+        bot.sendMessage(dt, m)

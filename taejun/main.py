@@ -12,7 +12,8 @@ def main(ratio=K_RATIO, interval=INTERVAL):
     upbit = pyupbit.Upbit(access_key, secret_key)
     print("balance : %.0f" % misc.get_balance(upbit))
 
-    tradingbot.watchdog(upbit, ratio=ratio, interval=interval)
+    # Strategy #1 - Volatility Breaks
+    tradingbot.vb_bot(upbit, ratio=ratio, interval=interval)
 
 
 if __name__ == "__main__":

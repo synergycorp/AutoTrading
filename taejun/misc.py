@@ -35,12 +35,11 @@ def get_df_format():
         'stoploss_target': [],
         'volume': [],
         'open': [],
-        'call': [],
+        'unit': [],
         'done': []
     }
 
     df = pd.DataFrame(data).set_index('ticker', drop=True)
-    df['call'] = df['call'].astype(bool)
     df['done'] = df['done'].astype(bool)
 
     return df
@@ -53,7 +52,7 @@ def set_price(tickers):
 def set_tickers(tickers_all, tickers, ratio=0.5, start=1, end=10, interval="minute240"):
     df0 = get_df_format()
 
-    for t in tickers.index:       # holdings processing
+    for t in tickers.index:  # holdings processing
         if t in EXCEPTION:
             continue
         if not tickers.loc[[t], ['done']].values:
@@ -79,7 +78,7 @@ def set_tickers(tickers_all, tickers, ratio=0.5, start=1, end=10, interval="minu
     for t in tickers_all:
         if t in EXCEPTION:
             continue
-        if t in df0.index:     # pass holdings
+        if t in df0.index:  # pass holdings
             continue
         while True:
             temp = pyupbit.get_ohlcv(ticker=t, interval=interval, count=2)
@@ -96,7 +95,7 @@ def set_tickers(tickers_all, tickers, ratio=0.5, start=1, end=10, interval="minu
             'stoploss_target': [0],
             'volume': [temp['value'].values[0]],
             'open': [temp['open'].values[1]],
-            'call': [False],
+            'unit': [0]
             'done': [False]
         }
         new_df = pd.DataFrame(new_data).set_index('ticker', drop=True)
@@ -108,10 +107,6 @@ def set_tickers(tickers_all, tickers, ratio=0.5, start=1, end=10, interval="minu
     merged_df = pd.concat([df0, trimmed_df])
 
     return merged_df
-
-
-def set_buy_target(tickers):
-    tickers['call'] = tickers['price'] - tickers['buy_target'] >= 0
 
 
 def get_time():
@@ -135,18 +130,28 @@ def buy_order(upbit, tickers):
     unit = int((get_balance(upbit) / sum(tickers.done == False)) / 1000) * 1000 * 2
     # unit = 10000
     print("unit : %d" % unit)
+    msg = []
     for t in tickers.index:
-        if tickers.loc[[t], ['call']].values & (not tickers.loc[[t], ['done']].values):
+        cond_0 = tickers.loc[[t], ['done']].values == False
+        cond_1 = tickers.loc[[t], ['price']].values >= tickers.loc[[t], ['buy_target']].values
+        cond = cond_0 & cond_1
+        if cond:
             upbit.buy_market_order(t, unit)
             tickers.loc[[t], ['done']] = True
-            print(t, "is bought for %.1f" % tickers.loc[[t], ['price']].values)
+            tickers.loc[[t], ['unit']] = unit
+            msg.append("[매수] %s → %.1f (총 %d 원)" % (t[4:], tickers.loc[[t], ['price']].values, unit))
+            print(msg[len(msg) - 1])
             time.sleep(0.1)
+    return msg
 
 
 def sell_order(upbit, tickers):
+    msg = []
     for t in [t for t in tickers.index if tickers.loc[[t], ['done']].values]:
         if tickers.loc[[t], ['price']].values < tickers.loc[[t], ['stoploss_target']].values:
             amount = get_balance(upbit, t[4:])  # drop KRW-
             upbit.sell_market_order(t, amount)
-            print(t, "is sold for %.1f" % tickers.loc[[t], ['price']].values)
+            msg.append("[매도] %s → %.1f (총 %d 원)" % (t[4:], tickers.loc[[t], ['price']].values, tickers.loc[[t], ['unit']].values))
+            print(msg[len(msg) - 1])
             time.sleep(0.1)
+    return msg
