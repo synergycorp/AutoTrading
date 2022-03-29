@@ -67,7 +67,10 @@ def set_tickers(tickers_all, tickers, ratio=0.5, start=1, end=10, interval="minu
             else:
                 time.sleep(0.02)
                 break
-        tickers.loc[[t], ['stoploss_target']] = temp['open'].values[1] * 0.97
+        stoploss_0 = temp['open'].values[1] * 0.97
+        stoploss_1 = tickers.loc[[t], ['buy_target']].values * 0.97
+        tickers.loc[[t], ['stoploss_target']] = max(stoploss_0, stoploss_1)
+        print("%d, %d, %d" % (stoploss_0, stoploss_1, tickers.loc[[t],['stoploss_target']]))
         tickers.loc[[t], ['open']] = temp['open'].values[1]
         df0 = pd.concat([df0, tickers.loc[[t]]])
 
@@ -105,7 +108,6 @@ def set_tickers(tickers_all, tickers, ratio=0.5, start=1, end=10, interval="minu
 
     trimmed_df = sorted_df[start - 1:end - numof_holdings].copy()
     merged_df = pd.concat([df0, trimmed_df])
-    set_price(merged_df)
 
     return merged_df
 
@@ -187,6 +189,7 @@ def watchdog(upbit, ratio=0.5, base_hour=9, interval="minute240"):
             print("[Update] ", end='')
             print_time(tm)
             tickers = set_tickers(tickers_all, tickers, ratio=ratio, interval=interval)
+            set_price(tickers)
             print(tickers)
 
             print("[Sell0] ", end='')
