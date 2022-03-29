@@ -95,7 +95,7 @@ def set_tickers(tickers_all, tickers, ratio=0.5, start=1, end=10, interval="minu
             'stoploss_target': [0],
             'volume': [temp['value'].values[0]],
             'open': [temp['open'].values[1]],
-            'unit': [0]
+            'unit': [0],
             'done': [False]
         }
         new_df = pd.DataFrame(new_data).set_index('ticker', drop=True)
