@@ -67,8 +67,8 @@ def set_tickers(tickers_all, tickers, ratio=0.5, start=1, end=10, interval="minu
             else:
                 time.sleep(0.02)
                 break
-        stoploss_0 = temp['open'].values[1] * 0.97
-        stoploss_1 = tickers.loc[[t], ['buy_target']].values * 0.97
+        stoploss_0 = temp['open'].values[1] * 0.98
+        stoploss_1 = tickers.loc[[t], ['buy_target']].values * 0.98
         tickers.loc[[t], ['stoploss_target']] = max(stoploss_0, stoploss_1)
         tickers.loc[[t], ['open']] = temp['open'].values[1]
         df0 = pd.concat([df0, tickers.loc[[t]]])
