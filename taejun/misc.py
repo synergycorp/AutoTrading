@@ -139,7 +139,7 @@ def buy_order(upbit, tickers):
             upbit.buy_market_order(t, unit)
             tickers.loc[[t], ['done']] = True
             tickers.loc[[t], ['unit']] = unit
-            msg.append("[매수] %s → %.1f (총 %d 원)" % (t[4:], tickers.loc[[t], ['price']].values, unit))
+            msg.append("[매수] %s ← %.1f (총 %d 원)" % (t[4:], tickers.loc[[t], ['price']].values, unit))
             print(msg[len(msg) - 1])
             time.sleep(0.1)
     return msg
