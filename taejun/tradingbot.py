@@ -12,7 +12,7 @@ def vb_bot(upbit, ratio=0.5, base_hour=9, interval="minute240"):
     tickers = misc.get_df_format()
     tickers = misc.set_tickers(tickers_all, tickers, ratio=ratio, interval=interval)
 
-    [bot, dt] = telebot.get_token()
+    [bot, dt] = tb.get_token()
     state = "initial"
 
     while True:
