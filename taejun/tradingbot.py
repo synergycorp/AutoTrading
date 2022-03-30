@@ -34,15 +34,12 @@ class TradingVB:
         self.base_hour = base_hour
 
     def run(self):
-        print("HEY")
         _interval = misc.conv_interval(self.interval)
         base_min = self.base_hour * 60
 
         tickers_all = misc.get_tickers()
         tickers = misc.get_df_format()
         tickers = misc.set_tickers(tickers_all, tickers, ratio=self.ratio, interval=self.interval)
-
-        bot = self.telegram
 
         while True:
             tm = misc.get_time()
@@ -87,11 +84,11 @@ class TradingVB:
                 print("[Sell] ", end='')
                 misc.print_time(tm)
                 msg = misc.sell_order(self.upbit, tickers)
-                self.telegram.send_msg(_bot=bot, msg=msg)
+                self.telegram.send_msg(msg=msg)
 
                 print("[Buy] ", end='')
                 misc.print_time(tm)
                 msg = misc.buy_order(self.upbit, tickers)
-                self.telegram.send_msg(_bot=bot, msg=msg)
+                self.telegram.send_msg(msg=msg)
 
             time.sleep(60)  # 1 minute

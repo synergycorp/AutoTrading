@@ -15,7 +15,7 @@ def main(ratio=K_RATIO, interval=INTERVAL):
     print("balance : %.0f" % misc.get_balance(upbit))
 
     tb = telebot.TeleBot()
-    trading_vb = tradingbot.TradingVB(upbit, tb.bot, ratio=K_RATIO, interval=INTERVAL)
+    trading_vb = tradingbot.TradingVB(upbit, tb, ratio=K_RATIO, interval=INTERVAL)
     tb.set_tb(trading_vb)
 
     # Telegram bot running
