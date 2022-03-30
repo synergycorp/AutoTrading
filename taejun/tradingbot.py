@@ -1,6 +1,5 @@
 import misc
 import time
-import telebot as tb
 
 
 class TradingVB:
@@ -88,11 +87,11 @@ class TradingVB:
                 print("[Sell] ", end='')
                 misc.print_time(tm)
                 msg = misc.sell_order(self.upbit, tickers)
-                tb.send_msg(_bot=bot, msg=msg)
+                self.telegram.send_msg(_bot=bot, msg=msg)
 
                 print("[Buy] ", end='')
                 misc.print_time(tm)
                 msg = misc.buy_order(self.upbit, tickers)
-                tb.send_msg(_bot=bot, msg=msg)
+                self.telegram.send_msg(_bot=bot, msg=msg)
 
             time.sleep(60)  # 1 minute

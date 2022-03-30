@@ -15,13 +15,14 @@ def main(ratio=K_RATIO, interval=INTERVAL):
     print("balance : %.0f" % misc.get_balance(upbit))
 
     tb = telebot.TeleBot()
+    trading_vb = tradingbot.TradingVB(upbit, tb.bot, ratio=K_RATIO, interval=INTERVAL)
+    tb.set_tb(trading_vb)
 
     # Telegram bot running
     th1 = Thread(target=tb.run_telebot())
     th1.start()
 
     # Strategy #1 - Volatility Breaks
-    trading_vb = tradingbot.TradingVB(upbit, tb.bot, ratio=K_RATIO, interval=INTERVAL)
     th2 = Thread(trading_vb.run())
     th2.start()
 

@@ -10,6 +10,10 @@ class TeleBot:
         self.token = t
         self.chat_id = d
         self.bot = self.set_bot()
+        self.tradingbot = 0
+
+    def set_tb(self, tradingbot):
+        self.tradingbot = tradingbot
 
     @staticmethod
     def get_token():
