@@ -3,26 +3,44 @@ import time
 import telebot as tb
 
 
-class VB_bot(upbit, ratio=0.5, interval="minute240", base_hour=9):
-    def __init__(self, state, ratio, interval, base_hour):
-        self.state = state
+class TradingVB:
+    def __init__(self, upbit, telegram, ratio, interval):
+        self.upbit = upbit
+        self.telegram = telegram
         self.ratio = ratio
         self.interval = interval
+        self.state = "initial"
+        self.next_state = "initial"
         self.base_hour = 9
 
+    def set_upbit(self, upbit):
+        self.upbit = upbit
 
-    def set_state(state):
-        self.STATE = state
+    def set_telegram(self, telegram):
+        self.telegram = telegram
 
+    def set_state(self, state):
+        self.state = state
 
-    def run(upbit, ratio=0.5, base_hour=9, interval="minute240"):
-        # constraint : you can choose interval only in minute3/5/10/15/30/60/240 and day
-        _interval = misc.conv_interval(interval)
-        base_min = base_hour * 60
+    def set_next_state(self, next_state):
+        self.next_state = next_state
+
+    def set_ratio(self, ratio):
+        self.ratio = ratio
+
+    def set_interval(self, interval):
+        self.interval = interval
+
+    def set_base_hour(self, base_hour):
+        self.base_hour = base_hour
+
+    def run(self):
+        _interval = misc.conv_interval(self.interval)
+        base_min = self.base_hour * 60
 
         tickers_all = misc.get_tickers()
         tickers = misc.get_df_format()
-        tickers = misc.set_tickers(tickers_all, tickers, ratio=ratio, interval=interval)
+        tickers = misc.set_tickers(tickers_all, tickers, ratio=self.ratio, interval=self.interval)
 
         [bot, dt] = tb.get_token()
 
@@ -34,20 +52,33 @@ class VB_bot(upbit, ratio=0.5, interval="minute240", base_hour=9):
             else:
                 _min = current_min - base_min
 
-            if _min % _interval == 0:
-                STATE = "update"
-            elif not STATE == "initial":
-                STATE = "check"
+            self.state = self.next_state
 
-            print("STATUS : ", STATE, end='')
-            print(" / _min = %d, base_min = %d, current_min = %d, _interval = %d, ratio = %d" % (_min, base_min, current_min, _interval, ratio))
+            if self.state == "stop":
+                self.state = "stop"
+                self.next_state = self.state
+            elif _min % _interval == 0:
+                self.state = "start"
+                self.next_state = "running"
+            elif self.state == "initial":
+                self.state = "initial"
+                self.next_state = self.state
+            else:
+                self.state = "running"
+                self.next_state = self.state
 
-            if STATE == "update":
+            print("STATUS : ", self.state, end='')
+            print(" / _min = %d, base_min = %d, current_min = %d, _interval = %d, ratio = %d" % (
+                _min, base_min, current_min, _interval, self.ratio))
+
+            if self.state == "start":
                 print("[Update Tickers] ", end='')
                 misc.print_time(tm)
-                tickers = misc.set_tickers(tickers_all, tickers, ratio=ratio, interval=interval)
+                tickers = misc.set_tickers(tickers_all, tickers, ratio=self.ratio, interval=self.interval)
+                self.state = "running"
+                time.sleep(0.1)
 
-            if not STATE == "initial":
+            if self.state == "running":
                 print("[Update Price] ", end='')
                 misc.print_time(tm)
                 misc.set_price(tickers)
@@ -55,12 +86,12 @@ class VB_bot(upbit, ratio=0.5, interval="minute240", base_hour=9):
 
                 print("[Sell] ", end='')
                 misc.print_time(tm)
-                msg = misc.sell_order(upbit, tickers)
+                msg = misc.sell_order(self.upbit, tickers)
                 tb.send_msg(bot, dt, msg)
 
                 print("[Buy] ", end='')
                 misc.print_time(tm)
-                msg = misc.buy_order(upbit, tickers)
+                msg = misc.buy_order(self.upbit, tickers)
                 tb.send_msg(bot, dt, msg)
 
             time.sleep(60)  # 1 minute
