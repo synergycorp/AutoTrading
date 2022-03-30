@@ -23,6 +23,7 @@ def set_bot(token):
 
 
 def send_msg(_bot, dt, msg):
+    print(type(_bot))
     for m in msg:
         _bot.sendMessage(dt, m)
 

@@ -42,7 +42,7 @@ class TradingVB:
         tickers = misc.get_df_format()
         tickers = misc.set_tickers(tickers_all, tickers, ratio=self.ratio, interval=self.interval)
 
-        [bot, dt] = tb.get_token()
+        [bot, dt] = self.telegram
 
         while True:
             tm = misc.get_time()
