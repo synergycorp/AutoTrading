@@ -35,6 +35,7 @@ class TradingVB:
         self.base_hour = base_hour
 
     def run(self):
+        print("HEY")
         _interval = misc.conv_interval(self.interval)
         base_min = self.base_hour * 60
 
@@ -87,11 +88,11 @@ class TradingVB:
                 print("[Sell] ", end='')
                 misc.print_time(tm)
                 msg = misc.sell_order(self.upbit, tickers)
-                tb.send_msg(bot=bot, msg=msg)
+                tb.send_msg(_bot=bot, msg=msg)
 
                 print("[Buy] ", end='')
                 misc.print_time(tm)
                 msg = misc.buy_order(self.upbit, tickers)
-                tb.send_msg(bot=bot, msg=msg)
+                tb.send_msg(_bot=bot, msg=msg)
 
             time.sleep(60)  # 1 minute
