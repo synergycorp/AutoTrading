@@ -10,10 +10,7 @@ class TeleBot:
         self.token = t
         self.chat_id = d
         self.bot = self.set_bot()
-        self.tradingbot = 0
-
-    def set_tb(self, tradingbot):
-        self.tradingbot = tradingbot
+        self.query_data = "none"
 
     @staticmethod
     def get_token():
@@ -49,7 +46,7 @@ class TeleBot:
     def on_callback_query(self, msg):
         query_id, from_id, query_data = telepot.glance(msg, flavor='callback_query')
         print('Callback Query:', query_id, from_id, query_data)
-        # if query_data == 'stop':
+        self.query_data = query_data
 
         self.bot.answerCallbackQuery(query_id, text='알았다')
 

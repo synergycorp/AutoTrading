@@ -16,7 +16,6 @@ def main(ratio=K_RATIO, interval=INTERVAL):
 
     tb = telebot.TeleBot()
     trading_vb = tradingbot.TradingVB(upbit, tb, ratio=K_RATIO, interval=INTERVAL)
-    tb.set_tb(trading_vb)
 
     # Telegram bot running
     th1 = Thread(target=tb.run_telebot())

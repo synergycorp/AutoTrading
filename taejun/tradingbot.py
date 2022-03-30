@@ -91,4 +91,17 @@ class TradingVB:
                 msg = misc.buy_order(self.upbit, tickers)
                 self.telegram.send_msg(msg=msg)
 
-            time.sleep(60)  # 1 minute
+            # How can I make it interrupt : reference each other
+            if self.telegram.query_data in ["start", "stop"]:
+                self.next_state = self.telegram.query_data
+            elif self.telegram.query_data == "set_interval":
+                self.telegram.send_msg(["개발중입니다."])
+            elif self.telegram.query_data == "set_exception":
+                self.telegram.send_msg(["개발중입니다."])
+            elif self.telegram.query_data == "show_balance":
+                self.telegram.send_msg([t[4:] for t in tickers.index if tickers.loc[[t],['done']].values==True])
+            elif self.telegram.query_data == "show_log":
+                self.telegram.send_msg(["개발중입니다."])
+            self.telegram.query_data = "none"
+
+            time.sleep(1)
