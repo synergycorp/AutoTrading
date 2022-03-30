@@ -13,7 +13,8 @@ def main(ratio=K_RATIO, interval=INTERVAL):
     print("balance : %.0f" % misc.get_balance(upbit))
 
     # Strategy #1 - Volatility Breaks
-    tradingbot.vb_bot(upbit, ratio=ratio, interval=interval)
+    vb_bot = tradingbot.VB_bot(upbit, ratio=K_RATIO, interval=INTERVAL)
+    vb_bot.run()
 
 
 if __name__ == "__main__":
