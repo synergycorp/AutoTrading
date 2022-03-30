@@ -5,7 +5,7 @@ import telebot
 from threading import Thread
 
 K_RATIO = 0.5
-INTERVAL = "minute3"  # minute3/5/10/15/30/60/240 and day
+INTERVAL = "minute240"  # minute3/5/10/15/30/60/240 and day
 
 
 def main(ratio=K_RATIO, interval=INTERVAL):
