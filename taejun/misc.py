@@ -127,7 +127,11 @@ def conv_interval(interval="minute240"):
 
 
 def buy_order(upbit, tickers):
-    unit = int((get_balance(upbit) / sum(tickers.done == False)) / 1000) * 1000 * 2
+    numof_monitor = sum(tickers.done == False)
+    if numof_monitor == 0:
+        unit = 0
+    else:
+        unit = int((get_balance(upbit) / numof_monitor) / 1000) * 1000 * 2
     # unit = 10000
     print("unit : %d" % unit)
     msg = []
