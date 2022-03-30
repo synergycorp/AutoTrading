@@ -13,10 +13,12 @@ def main(ratio=K_RATIO, interval=INTERVAL):
     upbit = pyupbit.Upbit(access_key, secret_key)
     print("balance : %.0f" % misc.get_balance(upbit))
 
-    tbot = [tb.set_bot(tb.get_token()[0]), tb.get_token()[1]]
+    # Telegram bot running
+    bot = tb.set_bot(tb.get_token()[0])
+    tb.run_telebot()
 
     # Strategy #1 - Volatility Breaks
-    trading_vb = tradingbot.TradingVB(upbit, tbot, ratio=K_RATIO, interval=INTERVAL)
+    trading_vb = tradingbot.TradingVB(upbit, bot, ratio=K_RATIO, interval=INTERVAL)
     trading_vb.run()
 
 

@@ -42,7 +42,7 @@ class TradingVB:
         tickers = misc.get_df_format()
         tickers = misc.set_tickers(tickers_all, tickers, ratio=self.ratio, interval=self.interval)
 
-        [bot, dt] = self.telegram
+        bot = self.telegram
 
         while True:
             tm = misc.get_time()
@@ -87,11 +87,11 @@ class TradingVB:
                 print("[Sell] ", end='')
                 misc.print_time(tm)
                 msg = misc.sell_order(self.upbit, tickers)
-                tb.send_msg(bot, dt, msg)
+                tb.send_msg(bot=bot, msg=msg)
 
                 print("[Buy] ", end='')
                 misc.print_time(tm)
                 msg = misc.buy_order(self.upbit, tickers)
-                tb.send_msg(bot, dt, msg)
+                tb.send_msg(bot=bot, msg=msg)
 
             time.sleep(60)  # 1 minute

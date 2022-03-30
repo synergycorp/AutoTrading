@@ -22,9 +22,9 @@ def set_bot(token):
     return _bot
 
 
-def send_msg(_bot, dt, msg):
+def send_msg(_bot, msg):
     for m in msg:
-        _bot.sendMessage(dt, m)
+        _bot.sendMessage(d, m)
 
 
 def on_chat_message(msg):
