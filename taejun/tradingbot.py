@@ -119,8 +119,10 @@ class TradingVB:
                 self.telegram.send_msg(["개발중입니다."])
             elif self.telegram.query_data[:13] == "set_interval_":
                 print(self.telegram.query_data[13:])
+                self.telegram.send_msg(["간격을 %s분으로 바꿉니다." % self.telegram.query_data[13:])
                 self.set_interval(self.telegram.query_data[13:])
             elif self.telegram.query_data == "sell_all":
+                self.telegram.send_msg(["다 팔라고 하셨습니다."])
                 self.sell_all()
             self.telegram.query_data = "none"
 
