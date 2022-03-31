@@ -38,7 +38,8 @@ class TeleBot:
                  InlineKeyboardButton(text='예외설정', callback_data='set_exception')],
                 [InlineKeyboardButton(text='보유종목', callback_data='show_balance'),
                  InlineKeyboardButton(text='기록보기', callback_data='show_log')],
-            ])
+                [InlineKeyboardButton(text='다팔아라', callback_data='sell_all')]
+                 ])
 
             if msg['text'][0] == '/':
                 self.bot.sendMessage(chat_id, '눌러', reply_markup=keyboard)
