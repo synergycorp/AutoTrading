@@ -39,11 +39,15 @@ class TradingVB:
                                         ratio=self.ratio, interval=self.interval)
 
     def get_holdings(self):
-        return [t[4:] for t in self.tickers.index if self.tickers.loc[[t], ['done']].values == True]
+        return [t for t in self.tickers if self.tickers.loc[[t], ['done']].values == True]
 
     def sell_all(self):
-        msg = misc.sell_order(self.upbit, self.get_holdings)
-        self.telegram.send_msg(msg=msg)
+        holdings = self.get_holdings().index
+        if len(holdings) == 0:
+            return
+        else:
+            msg = misc.sell_order(self.upbit, holdings)
+            self.telegram.send_msg(msg=msg)
 
     def run(self):
         _interval = misc.conv_interval(self.interval)
@@ -106,7 +110,11 @@ class TradingVB:
                 self.telegram.send_msg(msg=msg)
 
             # How can I make it interrupt : reference each other
-            if self.telegram.query_data in ["start", "stop"]:
+            if self.telegram.query_data in ["start"]:
+                self.telegram.send_msg(["시작합니다."])
+                self.next_state = self.telegram.query_data
+            elif self.telegram.query_data in ["stop"]:
+                self.telegram.send_msg(["종료합니다."])
                 self.next_state = self.telegram.query_data
             elif self.telegram.query_data == "set_interval":
                 self.telegram.send_msg(["개발중입니다."])
@@ -114,7 +122,7 @@ class TradingVB:
                 self.telegram.send_msg(["개발중입니다."])
             elif self.telegram.query_data == "show_balance":
                 # self.telegram.send_msg([t[4:] for t in self.tickers.index if self.tickers.loc[[t], ['done']].values == True])
-                self.telegram.send_msg(self.get_holdings)
+                self.telegram.send_msg(self.get_holdings.index[4:])
             elif self.telegram.query_data == "show_log":
                 self.telegram.send_msg(["개발중입니다."])
             elif self.telegram.query_data[:13] == "set_interval_":
