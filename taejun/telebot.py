@@ -38,6 +38,10 @@ class TeleBot:
                  InlineKeyboardButton(text='예외설정', callback_data='set_exception')],
                 [InlineKeyboardButton(text='보유종목', callback_data='show_balance'),
                  InlineKeyboardButton(text='기록보기', callback_data='show_log')],
+                [InlineKeyboardButton(text='3분', callback_data='set_interval_3'),
+                 InlineKeyboardButton(text='30분', callback_data='set_interval_30'),
+                 InlineKeyboardButton(text='60분', callback_data='set_interval_60'),
+                 InlineKeyboardButton(text='240분', callback_data='set_interval_240')],
                 [InlineKeyboardButton(text='다팔아라', callback_data='sell_all')]
                  ])
 

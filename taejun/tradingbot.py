@@ -117,6 +117,9 @@ class TradingVB:
                 self.telegram.send_msg(self.get_holdings)
             elif self.telegram.query_data == "show_log":
                 self.telegram.send_msg(["개발중입니다."])
+            elif self.telegram.query_data[:13] == "set_interval_":
+                print(self.telegram.query_data[13:])
+                self.set_interval(self.telegram.query_data[13:])
             elif self.telegram.query_data == "sell_all":
                 self.sell_all()
             self.telegram.query_data = "none"
