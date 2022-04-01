@@ -36,11 +36,13 @@ def get_df_format():
         'volume': [],
         'open': [],
         'unit': [],
-        'done': []
+        'done': [],
+        'sell_done':[]
     }
 
     df = pd.DataFrame(data).set_index('ticker', drop=True)
     df['done'] = df['done'].astype(bool)
+    df['sell_done'] = df['sell_done'].astype(bool)
 
     return df
 
@@ -96,7 +98,8 @@ def set_tickers(tickers_all, tickers, ratio=0.5, start=1, end=10, interval="minu
             'volume': [temp['value'].values[0]],
             'open': [temp['open'].values[1]],
             'unit': [0],
-            'done': [False]
+            'done': [False],
+            'sell_done': [False]
         }
         new_df = pd.DataFrame(new_data).set_index('ticker', drop=True)
         df1 = pd.concat([df1, new_df])
@@ -151,10 +154,20 @@ def buy_order(upbit, tickers):
 
 def sell_order(upbit, tickers):
     msg = []
+    print("test1")
     for t in [t for t in tickers.index if tickers.loc[[t], ['done']].values]:
-        if tickers.loc[[t], ['price']].values < tickers.loc[[t], ['stoploss_target']].values:
+        print("T :", t)
+        if tickers.loc[[t], ['sell_done']].values:
+            print("test2")
+            continue
+        elif tickers.loc[[t], ['price']].values < tickers.loc[[t], ['stoploss_target']].values:
+            print("test3")
             amount = get_balance(upbit, t[4:])  # drop KRW-
             upbit.sell_market_order(t, amount)
+            print(tickers.loc[[t]])
+            print(tickers.loc[[t], ['sell_done']])
+            tickers.loc[[t], ['sell_done']] = True
+            print(tickers.loc[[t], ['sell_done']])
             msg.append("[매도] %s → %.1f (총 %d 원)" % (t[4:], tickers.loc[[t], ['price']].values, tickers.loc[[t], ['unit']].values))
             print(msg[len(msg) - 1])
             time.sleep(0.1)

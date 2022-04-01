@@ -1,5 +1,6 @@
 import misc
 import time
+import pandas as pd
 
 
 class TradingVB:
@@ -39,14 +40,20 @@ class TradingVB:
                                         ratio=self.ratio, interval=self.interval)
 
     def get_holdings(self):
-        return [t for t in self.tickers if self.tickers.loc[[t], ['done']].values == True]
+        return self.tickers.loc[self.tickers['done'] & (self.tickers['sell_done'] == False)]
 
     def sell_all(self):
-        holdings = self.get_holdings().index
+        holdings = self.get_holdings()
         if len(holdings) == 0:
+            self.telegram.send_msg(["보유종목이 없습니다."])
             return
         else:
+            print("test4")
             msg = misc.sell_order(self.upbit, holdings)
+            print("test5")
+            for t in holdings.index:
+                print("testtest", t)
+                self.tickers.loc[[t], ['sell_done']] = True
             self.telegram.send_msg(msg=msg)
 
     def run(self):
@@ -121,8 +128,8 @@ class TradingVB:
             elif self.telegram.query_data == "set_exception":
                 self.telegram.send_msg(["개발중입니다."])
             elif self.telegram.query_data == "show_balance":
-                # self.telegram.send_msg([t[4:] for t in self.tickers.index if self.tickers.loc[[t], ['done']].values == True])
-                self.telegram.send_msg(self.get_holdings.index[4:])
+                self.telegram.send_msg([t[4:] for t in self.tickers.index if self.tickers.loc[[t], ['done']].values])
+                # self.telegram.send_msg([t[4:] for t in self.get_holdings.index])
             elif self.telegram.query_data == "show_log":
                 self.telegram.send_msg(["개발중입니다."])
             elif self.telegram.query_data[:13] == "set_interval_":
@@ -134,4 +141,4 @@ class TradingVB:
                 self.sell_all()
             self.telegram.query_data = "none"
 
-            time.sleep(60)  # Issue : Interrupt during Infinite loop
+            time.sleep(1)  # Issue : Interrupt during Infinite loop
