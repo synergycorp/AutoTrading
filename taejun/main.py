@@ -4,7 +4,7 @@ import tradingbot
 import telebot
 from threading import Thread
 
-K_RATIO = 0.5
+K_RATIO = 0.4
 INTERVAL = "minute240"  # minute3/5/10/15/30/60/240 and day
 
 
